@@ -64,15 +64,6 @@ def build_parser():
 
     add_arg("--mask-weight", type=float, default=1.0)                       # mask loss의 weight
     
-    add_arg("--perceptual-weight", type=float, default=1.0)                 # LPIPS perceptual loss의 가중치
-    add_arg("--perceptual-loss", type=str, default='vgg', choices=['vgg', 'timm', 'tv'])    # LPIPS에서 사용할 perceptual loss의 종류
-    add_arg("--perceptual-model", type=str, default='vgg')                  # LPIPS에서 사용하는 perceptual loss 모델 이름
-    add_arg("--perceptual-dino-variants", type=str, default='depth12_no_train')             # LPIPS용 DINO 모델의 variant 이름
-    add_arg("--perceptual-intermediate-loss", type=str2bool, default=False)                 # LPIPS의 중간 feature에서 perceptual loss를 계산할지 여부
-    add_arg("--perceptual-logit-loss", type=str2bool, default=False)        # LPIPS의 logits에서 perceptual loss를 계산할지 여부
-    add_arg("--perceptual-resize", type=str2bool, default=False)            # 입력 이미지를 resize한 후 LPIPS loss를 계산할지 여부
-    add_arg("--perceptual-warmup", type=int, default=None)                  # perceptual loss를 적용하기 시작할 iteration (warmup)
-    
     add_arg("--disc-weight", type=float, default=0.5)                       # GAN 학습 시 discriminator loss의 가중치
     add_arg("--disc-start", type=int, default=20000)                        # discriminator 학습을 시작할 iteration 수
     add_arg("--disc-dim", type=int, default=64)                             # discriminator의 기본 channel 수
@@ -108,8 +99,6 @@ def build_parser():
     add_arg("--gradient-accumulation-steps", type=int, default=1)           # gradient accumulation에 사용할 step 수
     add_arg("--mixed-precision", type=str, default='bf16', choices=["none", "fp16", "bf16"])  # mixed precision 학습에서 사용할 precision 종류
 
-    add_arg("--enc-type", type=str, default="cnn")                          # encoder 구조 타입 (예: cnn, vit 등)
-    add_arg("--dec-type", type=str, default="cnn")                          # decoder 구조 타입 (예: cnn, vit 등)
     add_arg("--num-latent-tokens", type=int, default=None)                  # 사용할 latent token의 개수 (None이면 default 방식)
     add_arg("--encoder-model", type=str, default='vit_tiny_patch14_dinov2.lvd142m')                     # 사용할 encoder 모델 이름  ##### vit_small_patch14_dinov2
     add_arg("--decoder-model", type=str, default='vit_tiny_patch14_dinov2.lvd142m')                     # 사용할 decoder 모델 이름  ##### vit_small_patch14_dinov2
@@ -120,22 +109,6 @@ def build_parser():
     add_arg("--encoder-patch-size", type=int, default=16)                   # encoder에서 사용하는 patch size
     add_arg("--decoder-patch-size", type=int, default=16)                   # decoder에서 사용하는 patch size
     add_arg("--to-pixel", type=str, default="linear")                       # latent를 이미지 픽셀로 변환하는 방식 (예: linear 등)
-
-    # repa
-    add_arg("--repa", type=str2bool, default=False, help='use repa')
-    add_arg('--repa-model', type=str, default='vit_base_patch16_224', help='repa model name')
-    add_arg('--repa-patch-size', type=int, default=16, help='repa patch size')
-    add_arg('--repa-proj-dim', type=int, default=1024, help='repa embed dim')
-    add_arg('--repa-loss-weight', type=float, default=0.1, help='repa loss weight')
-    add_arg('--repa-align', type=str, default='global', help='align repa feature', choices=['global', 'avg_1d', 'avg_2d', 'avg_1d_shuffle'])
-    
-    # aux decoder
-    add_arg("--aux-decoder-model", type=str, default='vit_tiny_patch14_dinov2_movq', help='aux decoder model name')
-    add_arg("--aux-loss-mask", type=str2bool, default='False', help='compute loss only at mask region')
-    add_arg("--aux-hog-decoder", type=str2bool, default=True, help='aux decoder hog decoder')
-    add_arg("--aux-dino-decoder", type=str2bool, default=True, help='aux decoder dino decoder')
-    add_arg("--aux-clip-decoder", type=str2bool, default=True, help='aux decoder hog decoder')
-    add_arg("--aux-supcls-decoder", type=str2bool, default=True, help='aux decoder hog decoder')
     
     # mask modeling
     # make sure drop is 0.0 for not using mask modeling
@@ -466,4 +439,5 @@ if __name__ == "__main__":
     
     # 2nd parse: final args with config applied
     args = parser.parse_args()
+    
     main(args)

@@ -392,49 +392,18 @@ class PrefixRouter(nn.Module):
 
     def forward(self, x, patch_policy=None, latent_policy=None, latent_length=16, patch_length=None,):
         x = self.in_conv(x)
-        # print(f"##### {x.shape}")
         B, N, C = x.size()  # x: (B, N, C)  (cls 제외한 spatial/latent 토큰)
         if patch_length is None:
             patch_length = latent_length * 4
-        # prev_mask: (B, N, 1) or None
         local_latent_x = x[:,-latent_length:, :C//2]  # x: (B,L,C/2)
-        # print(f"##### {local_latent_x.shape}")
         global_latent_x = (x[:,-latent_length:, C//2:] * latent_policy).sum(dim=1, keepdim=True) / torch.sum(latent_policy, dim=1, keepdim=True)  # x: (B,1,C/2)
-        # print(f"##### {global_latent_x.shape}")
         cat_x = torch.cat([local_latent_x, global_latent_x.expand(B, latent_length, C//2)], dim=-1)  # x: (B,L,C)
-        # print(f"##### {x.shape}")
-        # print(f"##### {patch_policy.shape}")
 
         global_patch_x = (x[:,:-latent_length, :] * patch_policy).sum(dim=1, keepdim=True) / torch.sum(patch_policy, dim=1, keepdim=True)  # x: (B,1,C)
-        # print(f"##### {x[:,:-latent_length, C:].shape}")
-        # print(f"##### {x[:,:-latent_length, :].shape}")
-        # print(f"##### {global_patch_x.shape}")
 
         cat_x = torch.cat([cat_x, global_patch_x.expand(B, latent_length, C)], dim=-1)  # x: (B,L,2C)
-        # print(f"##### {cat_x.shape}")
         logits = self.scorer(cat_x).squeeze(-1)           # (B, L)
-        # print(f"##### {logits.shape}")
 
-        # p_soft = F.gumbel_softmax(logits, tau=gumbel_tau, hard=False, dim=1)
-        # large_pos = torch.argmax(p_soft).item()
-        # print(f"Gumbel 뒤: {p_soft}")
-        # print(f"결정 지점 (0-base): {large_pos}")
-        
-        # cumsum_p = torch.cumsum(p_soft, dim=1)
-        # print(f"순차합: {cumsum_p}")
-
-        # # keep_soft = 1.0 - torch.roll(cumsum_p, shifts=1, dims=1)
-        # keep_soft = 1.0 - cumsum_p
-        # print(f"keep_soft: {keep_soft}")
-
-        # mask_loss = keep_soft.sum(dim=1, keepdim=True) / latent_length  # (B, 1)
-
-        # pos = keep_soft[large_pos].item()
-        # keep_hard = (keep_soft >= pos).float()
-        # keep_mask = (keep_hard - keep_soft).detach() + keep_soft   # (B, L)
-        # print(f"keep_mask: {keep_mask}")
-
-        # return keep_mask, mask_loss  # (BN2)->(BL)  |  (B, 1)
         return logits
 
 

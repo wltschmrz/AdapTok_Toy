@@ -252,10 +252,8 @@ class DynamicAEModel(nn.Module, PyTorchModelHubMixin):
         self.num_latent_tokens = config.num_latent_tokens
         self.codebook_embed_dim = config.codebook_embed_dim
         
-        assert config.enc_type == 'vit'
         self.encoder = TimmViTEncoder(
-            in_channels=3, num_latent_tokens=config.num_latent_tokens,
-            model_name=config.encoder_model,
+            in_channels=3, num_latent_tokens=config.num_latent_tokens, model_name=config.encoder_model,
             model_kwargs={'img_size': config.image_size, 'patch_size': config.enc_patch_size, 'drop_path_rate': config.enc_drop_path_rate},
             pretrained=config.enc_pretrained,
             tuning_method=config.enc_tuning_method,
@@ -266,10 +264,8 @@ class DynamicAEModel(nn.Module, PyTorchModelHubMixin):
             base_img_size=config.base_image_size
         )
             
-        assert config.dec_type == 'vit'
         self.decoder = TimmViTDecoder(
-            in_channels=3, num_latent_tokens=config.num_latent_tokens,
-            model_name=config.decoder_model,
+            in_channels=3, num_latent_tokens=config.num_latent_tokens, model_name=config.decoder_model,
             model_kwargs={'img_size': config.image_size, 'patch_size': config.dec_patch_size, 'drop_path_rate': config.dec_drop_path_rate, 'latent_dim': config.codebook_embed_dim},
             pretrained=config.dec_pretrained,
             tuning_method=config.dec_tuning_method,
@@ -283,19 +279,14 @@ class DynamicAEModel(nn.Module, PyTorchModelHubMixin):
 
         self.use_movq = False
         self.quantize = None
-        assert config.aux_hog_dec == False
-        assert config.aux_dino_dec == False
-        assert config.aux_clip_dec == False
 
     def encode(self, x):
-        if self.training:
-            h, mask, mask_loss = self.encoder(x, return_mask=True)
-        else:
-            h = self.encoder(x)
         info = None
         if self.training:
+            h, mask, mask_loss = self.encoder(x, return_mask=True)
             return h, mask_loss, info, mask
         else:
+            h = self.encoder(x)
             return h, mask_loss, info
 
     def decode(self, h, x=None, h_size=None, w=None):
@@ -325,11 +316,6 @@ VQ_models = {
 
 if __name__ == '__main__':
     
-    # model = DynamicAE_16(
-    #     codebook_embed_dim=16, enc_type='vit', dec_type='vit', encoder_model='vit_tiny_patch14_dinov2.lvd142m', 
-    #     decoder_model='vit_tiny_patch14_dinov2.lvd142m', num_codebooks=4, codebook_size=16384, 
-    #     aux_dec_model='vit_tinytiny_patch14_dinov2_movq2', aux_loss_mask=True, aux_dec_cls_token=True, aux_hog_dec=True, 
-    #     aux_dino_dec=True, aux_clip_dec=True, enc_token_drop=0.4, enc_token_drop_max=0.6)      
     model = DynamicAE_16(
         codebook_embed_dim=16, enc_type='vit', dec_type='vit', encoder_model='vit_tiny_patch16_224', 
         decoder_model='vit_tiny_patch16_224', num_codebooks=4, codebook_size=16384, 

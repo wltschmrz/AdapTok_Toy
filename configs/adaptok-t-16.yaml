@@ -37,7 +37,6 @@ disc_loss: hinge
 gen_loss: hinge
 lecam_loss_weight: 0.0  # 0.001
 
-enc_type: vit
 encoder_model: vit_tiny_patch16_224  # latent: 192 // vit_base_patch14_dinov2.lvd142m
 encoder_pretrained: False
 encoder_patch_size: 16

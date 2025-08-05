@@ -52,7 +52,7 @@ class TimmViTEncoder(nn.Module):
         PRUNING_LOC = [2, 4, 6]
         model = VisionTransformerDiffPruning(
             img_size=128,
-            patch_size=16, embed_dim=48, depth=8, num_heads=4, mlp_ratio=4, qkv_bias=True, 
+            patch_size=8, embed_dim=48, depth=8, num_heads=4, mlp_ratio=4, qkv_bias=True, 
             pruning_loc=PRUNING_LOC
             )
         model.num_prefix_tokens=0
@@ -182,6 +182,7 @@ class TimmViTEncoder(nn.Module):
                     x, 
                     patch_policy=prev_decision[:, :-self.num_latent_tokens, :],
                     latent_policy=prev_decision[:, -self.num_latent_tokens:, :],
+                    latent_length=self.num_latent_tokens,
                     )  # (BL) <- (BN2)
                 # print(f"##### {logits.shape}")  # ##### torch.Size([128, 16])
                 if self.training:
@@ -212,6 +213,14 @@ class TimmViTEncoder(nn.Module):
                     policy = torch.cat([patch_policy, hard_keep_decision], dim=1)
                     x = blk(x, policy=policy, freqs_cis=freqs_cis[i], num_prefix_tokens=self.num_prefix_tokens, num_latent_tokens=self.num_latent_tokens)
                     prev_decision = policy
+
+
+                    if policy.dim() == 3:
+                        policy = policy.squeeze(-1)
+                    num_ones_per_sample = (policy == 1).sum(dim=1) - 256
+                    print("Num of 1s per sample in batch:", num_ones_per_sample.tolist())
+
+
                 else:
                     with torch.no_grad():
                         p_soft = F.softmax(logits, dim=1)

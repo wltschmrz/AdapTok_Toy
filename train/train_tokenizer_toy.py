@@ -173,9 +173,7 @@ def main(args):
         vq_loss_ratio=args.vq_loss_ratio,
         kl_loss_weight=args.kl_loss_weight,
         dropout_p=args.dropout_p,
-        enc_type=args.enc_type,
         encoder_model=args.encoder_model,
-        dec_type=args.dec_type,
         decoder_model=args.decoder_model,
         num_latent_tokens=args.num_latent_tokens,
         enc_tuning_method=args.encoder_tuning_method,
@@ -195,13 +193,6 @@ def main(args):
         # encoder mask modeling
         enc_token_drop=args.enc_token_drop,
         enc_token_drop_max=args.enc_token_drop_max,
-        # aux decoder model
-        aux_dec_model=args.aux_decoder_model,
-        aux_loss_mask=args.aux_loss_mask,
-        aux_hog_dec=args.aux_hog_decoder,
-        aux_dino_dec=args.aux_dino_decoder,
-        aux_clip_dec=args.aux_clip_decoder,
-        aux_supcls_dec=args.aux_supcls_decoder,
         # to pixel
         to_pixel=args.to_pixel,
     )
@@ -330,7 +321,7 @@ def main(args):
             with torch.cuda.amp.autocast(dtype=ptdtype):  
                 recons_imgs, mask_loss, info = vq_model(imgs)
                 loss_gen = vq_loss(mask_loss, imgs, recons_imgs, optimizer_idx=0, global_step=train_steps+1, 
-                                   last_layer=vq_model.module.decoder.last_layer, 
+                                   last_layer=vq_model.module.decoder.to_pixel.model.weight, adaptive_weight=args.disc_adaptive_weight,
                                    logger=logger, log_every=args.log_every)
             scaler.scale(loss_gen).backward()
             if args.max_grad_norm != 0.0:

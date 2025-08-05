@@ -102,13 +102,7 @@ class VQLoss(nn.Module):
 
         # reconstruction loss
         rec_loss = self.rec_loss(inputs.contiguous(), reconstructions.contiguous())
-
-        # # discriminator loss
-        # if self.use_diff_aug:
-        #     reconstructions = DiffAugment(reconstructions.contiguous(), policy='color,translation,cutout_0.2', prob=0.5)
-        # logits_fake = self.discriminator(reconstructions.contiguous())
-        # generator_adv_loss = self.gen_adv_loss(logits_fake)
-             
+        
         # repa loss X
         # mask sparsity loss O
         mask_loss1 = codebook_loss[0]
@@ -135,10 +129,10 @@ class VQLoss(nn.Module):
         # disc_weight = adopt_weight(self.disc_weight, global_step, threshold=self.discriminator_iter_start)
 
 
-        loss = self.rec_weight * rec_loss # + \
-            # mask_ad_w1 * self.mask_weight * mask_loss1 + \
-            # mask_ad_w2 * self.mask_weight * mask_loss2 + \
-            # mask_ad_w3 * self.mask_weight * mask_loss3
+        loss = self.rec_weight * rec_loss  + \
+            mask_ad_w1 * self.mask_weight * mask_loss1 + \
+            mask_ad_w2 * self.mask_weight * mask_loss2 + \
+            mask_ad_w3 * self.mask_weight * mask_loss3
             # perceptual_weight * p_loss + \
             # disc_adaptive_weight * disc_weight * generator_adv_loss
         

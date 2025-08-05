@@ -56,8 +56,6 @@ class ModelArgs:
     z_channels: int = 256
     dropout_p: float = 0.0
 
-    enc_type: str = 'cnn'
-    dec_type: str = 'cnn'
     encoder_model: str = 'llamagen_encoder'
     decoder_model: str = 'llamagen_decoder'
     num_latent_tokens: int = 256

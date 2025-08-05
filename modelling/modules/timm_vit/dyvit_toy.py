@@ -390,12 +390,13 @@ class PrefixRouter(nn.Module):
             nn.Linear(embed_dim // int(2*down_scale / 2), 1)   # per-token scalar s_i
         )
 
-    def forward(self, x, patch_policy=None, latent_policy=None, latent_length=16, patch_length=None,):
+    def forward(self, x, patch_policy=None, latent_policy=None, latent_length=32, patch_length=None,):
         x = self.in_conv(x)
         B, N, C = x.size()  # x: (B, N, C)  (cls 제외한 spatial/latent 토큰)
         if patch_length is None:
-            patch_length = latent_length * 4
+            patch_length = N - latent_length
         local_latent_x = x[:,-latent_length:, :C//2]  # x: (B,L,C/2)
+        print(f'local_latent_x: {local_latent_x.shape}, global_latent_x: {x[:,-latent_length:, C//2:].shape}, patch_policy: {patch_policy.shape}, latent_policy: {latent_policy.shape}')
         global_latent_x = (x[:,-latent_length:, C//2:] * latent_policy).sum(dim=1, keepdim=True) / torch.sum(latent_policy, dim=1, keepdim=True)  # x: (B,1,C/2)
         cat_x = torch.cat([local_latent_x, global_latent_x.expand(B, latent_length, C//2)], dim=-1)  # x: (B,L,C)
 
@@ -520,13 +521,13 @@ class VisionTransformerDiffPruning(nn.Module):
 
         p_count = 0
         out_pred_prob = []
-        patch_length = H = 8 * 8
+        patch_length = H = 16 * 16
         prev_decision = torch.ones(B, H, 1, dtype=x.dtype, device=x.device)
         policy = torch.ones(B, H + 1, 1, dtype=x.dtype, device=x.device)
         for i, blk in enumerate(self.blocks):
             if i in self.pruning_loc:
                 spatial_x = x[:, 1:]
-                pred_score = self.score_predictor[p_count](spatial_x, prev_decision).reshape(B, -1, 2)
+                pred_score = self.score_predictor[p_count](spatial_x, prev_decision, latent_length=32).reshape(B, -1, 2)
                 if self.training:
                     hard_keep_decision = F.gumbel_softmax(pred_score, hard=True)[:, :, 0:1] * prev_decision
                     out_pred_prob.append(hard_keep_decision.reshape(B, H))

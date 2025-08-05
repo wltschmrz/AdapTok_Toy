@@ -18,7 +18,7 @@ vq_model: DynamicAE-16
 ema: True
 
 # latent 토큰 상한(변수 길이 실험은 여기서 <=16 사용)
-num_latent_tokens: 16
+num_latent_tokens: 32
 codebook_embed_dim: 32
 entropy_loss_ratio: 0.01   # routing 확신도(저엔트로피) 유도. 0.0 -> 0.01  ##### 무슨 의도 일까?
 
@@ -39,17 +39,16 @@ lecam_loss_weight: 0.0  # 0.001
 
 encoder_model: vit_tiny_patch16_224  # latent: 192 // vit_base_patch14_dinov2.lvd142m
 encoder_pretrained: False
-encoder_patch_size: 16
+encoder_patch_size: 8
 encoder_tuning_method: full
 encoder_drop_path_rate: 0.0  # 얘는 뭐냐?  #####
 encoder_depth: 4            # <-- 추가 키를 지원하도록 코드에 반영 예정
 encoder_embed_dim: 128      # <-- "
 encoder_num_heads: 2        # <-- "
 
-dec_type: vit
 decoder_model: vit_tiny_patch16_224  # vit_base_patch14_dinov2_movqv2
 decoder_pretrained: False 
-decoder_patch_size: 16
+decoder_patch_size: 8
 decoder_tuning_method: full
 decoder_drop_path_rate: 0.0  # 0.05  왜???
 decoder_cls_token: False
@@ -82,7 +81,7 @@ repa_loss_weight: 0.1
 repa_align: repeat
 
 # optimizer / schedule
-epochs: 240  # 200
+epochs: 300  # 200
 lr: 1.0e-4
 lr_warmup_epochs: 2
 optim: adamw
@@ -91,7 +90,7 @@ weight_decay: 5e-4  # 0.0001 = 	1e-4
 beta1: 0.9
 beta2: 0.95
 max_grad_norm: 1.0
-global_batch_size: 1536     # 4×3090에서 충분. 메모리 보고 1536~2048도 시도.
+global_batch_size: 512     # 4×3090에서 충분. 메모리 보고 1536~2048도 시도.
 
 
 # length penalty(코드에 추가 구현)

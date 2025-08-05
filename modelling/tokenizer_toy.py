@@ -1,6 +1,3 @@
-# Modified from:
-#   taming-transformers: https://github.com/CompVis/taming-transformers
-#   maskgit: https://github.com/google-research/maskgit
 from dataclasses import dataclass, field
 from typing import List
 import torch
@@ -11,10 +8,6 @@ import os, sys
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 from modelling.modules import Encoder, Decoder, TimmViTEncoder, TimmViTDecoder
-from modelling.quantizers.vq import VectorQuantizer
-from modelling.quantizers.kl import DiagonalGaussianDistribution
-from modelling.quantizers.softvq import SoftVectorQuantizer
-
 from timm import create_model
 
 
@@ -145,10 +138,10 @@ class DynamicAEModel(nn.Module, PyTorchModelHubMixin):
         self.use_movq = False
         self.quantize = None
 
-    def encode(self, x):
+    def encode(self, x, tau):
         info = None
         if self.training:
-            h, mask, mask_loss = self.encoder(x, return_mask=True)
+            h, mask, mask_loss = self.encoder(x, return_mask=True, gumbel_tau=tau)
             return h, mask_loss, info, mask
         else:
             h = self.encoder(x)
@@ -158,10 +151,14 @@ class DynamicAEModel(nn.Module, PyTorchModelHubMixin):
         dec = self.decoder(h, None, h_size, w)
         return dec
 
-    def forward(self, input):
+    def forward(self, input, epoch):
         b, _, h, w = input.size()
         if self.training:
-            latent, diff, info, mask = self.encode(input)
+            tau_start = 1.0
+            tau_min = 0.1
+            tau_decay = 0.9999
+            tau = max(tau_start * (tau_decay ** epoch), tau_min)
+            latent, diff, info, mask = self.encode(input, tau)
         else:
             latent, diff, info = self.encode(input)
         self.quant = latent

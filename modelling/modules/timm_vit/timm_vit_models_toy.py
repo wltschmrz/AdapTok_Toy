@@ -184,38 +184,27 @@ class TimmViTEncoder(nn.Module):
                     latent_policy=prev_decision[:, -self.num_latent_tokens:, :],
                     latent_length=self.num_latent_tokens,
                     )  # (BL) <- (BN2)
-                # print(f"##### {logits.shape}")  # ##### torch.Size([128, 16])
+                logits = logits.clamp(min=-5, max=5)
                 if self.training:
                     p_soft = F.gumbel_softmax(logits, tau=gumbel_tau, hard=False, dim=1)
-                    # print(f"##### {p_soft.shape}")  # torch.Size([128, 16])
                     large_pos = torch.argmax(p_soft, dim=1, keepdim=True)  # (B, 1)
-
-                    # print(f"##### {large_pos.shape}")  ##### torch.Size([128])
-
                     cumsum_p = torch.cumsum(p_soft, dim=1)
                     print(f'##### {cumsum_p[0]}')  # mean mask loss
+
                     keep_soft = 1.0 - cumsum_p
                     print(f'##### {keep_soft[0]}')  # mean mask loss
-                    # print(f"##### {keep_soft.shape}")  ##### torch.Size([128, 16])
 
-                    # mask_loss = torch.sum(keep_soft.sum(dim=1, keepdim=True) / self.num_latent_tokens) / B
-                    mask_loss = keep_soft.sum(dim=1, keepdim=True) / self.num_latent_tokens
+                    mask_penalty = mask_loss = (keep_soft.sum(dim=1, keepdim=True) / self.num_latent_tokens) ** 2
                     print(f'##### {mask_loss.mean().item()}')  # mean mask loss
-                    # print(f"##### {mask_loss.shape}")    ##### torch.Size([128, 1])
-                    pos = torch.gather(keep_soft, 1, large_pos)
-                    # print(f"##### {pos.shape}")  ##### torch.Size([128, 128])
 
+                    pos = torch.gather(keep_soft, 1, large_pos)
                     B, T = keep_soft.shape
                     positions = torch.arange(T, device=keep_soft.device).unsqueeze(0)  # (1, T)
 
                     keep_hard = (positions < large_pos).float()
-                    # print(f"##### {keep_hard.shape}")
                     keep_mask = (keep_hard - keep_soft).detach() + keep_soft   # (B, L)
-                    # print(f"##### {keep_mask.shape}")
                     hard_keep_decision = keep_mask.reshape(B, self.num_latent_tokens, 1) * prev_decision[:, -self.num_latent_tokens:, :]
-                    # mask_loss  (B, 1)
 
-                    # losses.append(mask_loss.reshape(B, 1))
                     losses.append(mask_loss.mean())
                     policy = torch.cat([patch_policy, hard_keep_decision], dim=1)
                     x = blk(x, policy=policy, freqs_cis=freqs_cis[i], num_prefix_tokens=self.num_prefix_tokens, num_latent_tokens=self.num_latent_tokens)

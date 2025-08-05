@@ -1,13 +1,6 @@
-# Modified from:
-#   taming-transformers:  https://github.com/CompVis/taming-transformers
-#   muse-maskgit-pytorch: https://github.com/lucidrains/muse-maskgit-pytorch/blob/main/muse_maskgit_pytorch/vqgan_vae.py
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
-from modelling.lpips import LPIPS, LPIPSTimm
-from modelling.discriminators import PatchGANDiscriminator, StyleGANDiscriminator, PatchGANMaskBitDiscriminator, DinoDiscriminator
-from utils.diff_aug import DiffAugment
 
 import torch.distributed as tdist
 

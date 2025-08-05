@@ -320,7 +320,7 @@ def main(args):
             # generator training
             optimizer.zero_grad()
             with torch.cuda.amp.autocast(dtype=ptdtype):  
-                recons_imgs, mask_loss, info = vq_model(imgs)
+                recons_imgs, mask_loss, info = vq_model(imgs, epoch=epoch)
                 loss_gen = vq_loss(mask_loss, imgs, recons_imgs, optimizer_idx=0, global_step=train_steps+1, 
                                    last_layer=vq_model.module.encoder.model.patch_embed.proj.weight, adaptive_weight=args.disc_adaptive_weight,
                                    logger=logger, log_every=args.log_every)
@@ -333,18 +333,6 @@ def main(args):
             if args.ema:
                 update_ema(ema, vq_model.module._orig_mod if args.compile else vq_model.module)
 
-            # # discriminator training            
-            # optimizer_disc.zero_grad()
-            # with torch.cuda.amp.autocast(dtype=ptdtype):
-            #     loss_disc = vq_loss(codebook_loss, imgs, recons_imgs, optimizer_idx=1, global_step=train_steps+1,
-            #                         logger=logger, log_every=args.log_every)
-            # scaler_disc.scale(loss_disc).backward()
-            # if args.max_grad_norm != 0.0:
-            #     scaler_disc.unscale_(optimizer_disc)
-            #     torch.nn.utils.clip_grad_norm_(vq_loss.module.discriminator.parameters(), args.max_grad_norm)
-            # scaler_disc.step(optimizer_disc)
-            # scaler_disc.update()
-            
             # # Log loss values:
             running_loss += loss_gen.item()  # + loss_disc.item()
             

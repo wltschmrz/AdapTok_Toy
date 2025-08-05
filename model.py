@@ -776,18 +776,25 @@ class AdapTok(nn.Module, PyTorchModelHubMixin):
 
 
 # ---
-import argparse
 
-def extract_model_args(args: argparse.Namespace, cls=ModelArgs) -> ModelArgs:
-    arg_dict = vars(args)                                               # argparse.Namespace → dict
-    valid_keys = {f.name for f in fields(cls)}                          # ModelArgs가 받는 key 목록 추출
-    filtered = {k: v for k, v in arg_dict.items() if k in valid_keys}   # 불필요한 키 제거
-    return cls(**filtered)
 
-model_args = extract_model_args(args)  # 안전하게 생성
 
-# create and load model
-vq_model = AdapTok(model_args)  # 모델 생성
+
+
+
+if __name__ == "__main__":
+    import argparse
+
+    def extract_model_args(args: argparse.Namespace, cls=ModelArgs) -> ModelArgs:
+        arg_dict = vars(args)                                               # argparse.Namespace → dict
+        valid_keys = {f.name for f in fields(cls)}                          # ModelArgs가 받는 key 목록 추출
+        filtered = {k: v for k, v in arg_dict.items() if k in valid_keys}   # 불필요한 키 제거
+        return cls(**filtered)
+
+    model_args = extract_model_args(args)  # 안전하게 생성
+
+    # create and load model
+    vq_model = AdapTok(model_args)  # 모델 생성
 
 
 

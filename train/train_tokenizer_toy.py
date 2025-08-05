@@ -196,6 +196,7 @@ def main(args):
         # to pixel
         to_pixel=args.to_pixel,
     )
+    # print(vq_model)
     logger.info(f"VQ Model Parameters: {sum(prms.numel() for prms in vq_model.parameters() if prms.requires_grad):,}")
     if args.ema:
         ema = deepcopy(vq_model).to(device)  # Create an EMA of the model for use after training  ### 수정할 것. EMA는 CPU에 놓을 수 있게 설정 요소 추가하자.
@@ -321,7 +322,7 @@ def main(args):
             with torch.cuda.amp.autocast(dtype=ptdtype):  
                 recons_imgs, mask_loss, info = vq_model(imgs)
                 loss_gen = vq_loss(mask_loss, imgs, recons_imgs, optimizer_idx=0, global_step=train_steps+1, 
-                                   last_layer=vq_model.module.decoder.to_pixel.model.weight, adaptive_weight=args.disc_adaptive_weight,
+                                   last_layer=vq_model.module.encoder.model.patch_embed.proj.weight, adaptive_weight=args.disc_adaptive_weight,
                                    logger=logger, log_every=args.log_every)
             scaler.scale(loss_gen).backward()
             if args.max_grad_norm != 0.0:

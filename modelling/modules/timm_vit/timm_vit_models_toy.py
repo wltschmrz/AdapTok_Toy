@@ -49,7 +49,7 @@ class TimmViTEncoder(nn.Module):
         ######
         # load model
         base_rate = 0.9
-        PRUNING_LOC = [2, 4, 6]
+        PRUNING_LOC = [6]
         model = VisionTransformerDiffPruning(
             img_size=128,
             patch_size=8, embed_dim=48, depth=8, num_heads=4, mlp_ratio=4, qkv_bias=True, 
@@ -193,15 +193,22 @@ class TimmViTEncoder(nn.Module):
                     # print(f"##### {large_pos.shape}")  ##### torch.Size([128])
 
                     cumsum_p = torch.cumsum(p_soft, dim=1)
+                    print(f'##### {cumsum_p[0]}')  # mean mask loss
                     keep_soft = 1.0 - cumsum_p
+                    print(f'##### {keep_soft[0]}')  # mean mask loss
                     # print(f"##### {keep_soft.shape}")  ##### torch.Size([128, 16])
 
                     # mask_loss = torch.sum(keep_soft.sum(dim=1, keepdim=True) / self.num_latent_tokens) / B
                     mask_loss = keep_soft.sum(dim=1, keepdim=True) / self.num_latent_tokens
+                    print(f'##### {mask_loss.mean().item()}')  # mean mask loss
                     # print(f"##### {mask_loss.shape}")    ##### torch.Size([128, 1])
                     pos = torch.gather(keep_soft, 1, large_pos)
                     # print(f"##### {pos.shape}")  ##### torch.Size([128, 128])
-                    keep_hard = (keep_soft >= pos).float()
+
+                    B, T = keep_soft.shape
+                    positions = torch.arange(T, device=keep_soft.device).unsqueeze(0)  # (1, T)
+
+                    keep_hard = (positions < large_pos).float()
                     # print(f"##### {keep_hard.shape}")
                     keep_mask = (keep_hard - keep_soft).detach() + keep_soft   # (B, L)
                     # print(f"##### {keep_mask.shape}")
@@ -218,7 +225,7 @@ class TimmViTEncoder(nn.Module):
                     if policy.dim() == 3:
                         policy = policy.squeeze(-1)
                     num_ones_per_sample = (policy == 1).sum(dim=1) - 256
-                    print("Num of 1s per sample in batch:", num_ones_per_sample.tolist())
+                    print("Num of 1s per sample in batch:", num_ones_per_sample.float().mean().item())
 
 
                 else:

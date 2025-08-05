@@ -396,7 +396,7 @@ class PrefixRouter(nn.Module):
         if patch_length is None:
             patch_length = N - latent_length
         local_latent_x = x[:,-latent_length:, :C//2]  # x: (B,L,C/2)
-        print(f'local_latent_x: {local_latent_x.shape}, global_latent_x: {x[:,-latent_length:, C//2:].shape}, patch_policy: {patch_policy.shape}, latent_policy: {latent_policy.shape}')
+        # print(f'local_latent_x: {local_latent_x.shape}, global_latent_x: {x[:,-latent_length:, C//2:].shape}, patch_policy: {patch_policy.shape}, latent_policy: {latent_policy.shape}')
         global_latent_x = (x[:,-latent_length:, C//2:] * latent_policy).sum(dim=1, keepdim=True) / torch.sum(latent_policy, dim=1, keepdim=True)  # x: (B,1,C/2)
         cat_x = torch.cat([local_latent_x, global_latent_x.expand(B, latent_length, C//2)], dim=-1)  # x: (B,L,C)
 

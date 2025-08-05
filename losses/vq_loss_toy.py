@@ -106,23 +106,32 @@ class VQLoss(nn.Module):
         # repa loss X
         # mask sparsity loss O
         mask_loss1 = codebook_loss[0]
-        mask_loss2 = codebook_loss[1]
-        mask_loss3 = codebook_loss[2]
+        mask_loss2 = 0
+        mask_loss3 = 0
+        # mask_loss2 = codebook_loss[1]
+        # mask_loss3 = codebook_loss[2]
 
         loss_function = nn.NLLLoss()
 
-        mask_loss1 = -torch.log(1 - codebook_loss[0] + 1e-8)
-        mask_loss2 = -torch.log(1 - codebook_loss[1] + 1e-8)
-        mask_loss3 = -torch.log(1 - codebook_loss[2] + 1e-8)
+        mask_loss1 = - torch.log(1 - codebook_loss[0] + 1e-8)
+        # mask_loss2 = -torch.log(1 - codebook_loss[1] + 1e-8)
+        # mask_loss3 = -torch.log(1 - codebook_loss[2] + 1e-8)
 
         total_mask_loss = codebook_loss[4] if len(codebook_loss) > 4 else mask_loss1 + mask_loss2 + mask_loss3
 
         # assert adaptive_weight is True
         if adaptive_weight:
             null_loss = self.rec_weight * rec_loss
+            # grad_null = torch.autograd.grad(null_loss, last_layer, retain_graph=True, allow_unused=True)[0]
+            # print("grad w.r.t. null_loss:", grad_null)  
+            # grad_mask = torch.autograd.grad(mask_loss1, last_layer, retain_graph=True, allow_unused=True)[0]
+            # print("grad w.r.t. mask_loss1:", grad_mask)
+
             mask_ad_w1 = self.calculate_adaptive_weight(null_loss, mask_loss1, last_layer=last_layer)
-            mask_ad_w2 = self.calculate_adaptive_weight(null_loss, mask_loss2, last_layer=last_layer)
-            mask_ad_w3 = self.calculate_adaptive_weight(null_loss, mask_loss3, last_layer=last_layer)
+            # mask_ad_w2 = self.calculate_adaptive_weight(null_loss, mask_loss2, last_layer=last_layer)
+            # mask_ad_w3 = self.calculate_adaptive_weight(null_loss, mask_loss3, last_layer=last_layer)
+            mask_ad_w2 = 0
+            mask_ad_w3 = 0
 
         else:
             mask_ad_w1 = mask_ad_w2 = mask_ad_w3 = 1
@@ -130,9 +139,9 @@ class VQLoss(nn.Module):
 
 
         loss = self.rec_weight * rec_loss  + \
-            mask_ad_w1 * self.mask_weight * mask_loss1 + \
-            mask_ad_w2 * self.mask_weight * mask_loss2 + \
-            mask_ad_w3 * self.mask_weight * mask_loss3
+            mask_ad_w1 * self.mask_weight * mask_loss1 # + \
+            # mask_ad_w2 * self.mask_weight * mask_loss2 + \
+            # mask_ad_w3 * self.mask_weight * mask_loss3
             # perceptual_weight * p_loss + \
             # disc_adaptive_weight * disc_weight * generator_adv_loss
         

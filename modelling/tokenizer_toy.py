@@ -141,7 +141,7 @@ class DynamicAEModel(nn.Module, PyTorchModelHubMixin):
     def encode(self, x, tau):
         info = None
         if self.training:
-            h, mask, mask_loss = self.encoder(x, return_mask=True, gumbel_tau=tau)
+            h, mask, mask_loss, info = self.encoder(x, return_mask=True, gumbel_tau=tau)
             return h, mask_loss, info, mask
         else:
             h = self.encoder(x)
@@ -153,14 +153,15 @@ class DynamicAEModel(nn.Module, PyTorchModelHubMixin):
 
     def forward(self, input, epoch):
         b, _, h, w = input.size()
+        tau_start = 1.0
+        tau_min = 0.1
+        tau_decay = 0.9999
+        tau = max(tau_start * (tau_decay ** epoch), tau_min)
         if self.training:
-            tau_start = 1.0
-            tau_min = 0.1
-            tau_decay = 0.9999
-            tau = max(tau_start * (tau_decay ** epoch), tau_min)
+            
             latent, diff, info, mask = self.encode(input, tau)
         else:
-            latent, diff, info = self.encode(input)
+            latent, diff, info = self.encode(input, tau)
         self.quant = latent
         # print(quant.shape)
         dec = self.decode(latent, x=input, h_size=h, w=w)

@@ -220,17 +220,18 @@ class TimmViTEncoder(nn.Module):
                 else:
                     with torch.no_grad():
                         p_soft = F.softmax(logits, dim=1)
-                        large_pos = torch.argmax(p_soft, dim=1)
+                        large_pos = torch.argmax(p_soft, dim=1, keepdim=True)  # shape: (B, 1)
+                        B, T = p_soft.shape
+                        positions = torch.arange(T, device=p_soft.device).unsqueeze(0)  # shape: (1, T)
 
-                        cumsum_p = torch.cumsum(p_soft, dim=1)
-                        keep_soft = 1.0 - cumsum_p
+                        keep_hard = (positions < large_pos).float()  # shape: (B, T)
 
-                        pos = keep_soft[:, large_pos].item()
-                        keep_hard = (keep_soft >= pos).float()
-                        keep_mask = (keep_hard - keep_soft).detach() + keep_soft   # (B, L)
+                        keep_mask = keep_hard  # detach 불필요, grad 없으므로
+
                         hard_keep_decision = keep_mask.reshape(B, self.num_latent_tokens, 1) * prev_decision[:, -self.num_latent_tokens:, :]
-                        
+
                         now_policy = torch.cat([patch_policy, hard_keep_decision], dim=1)
+
                         x = batch_index_select(x, now_policy)
                         prev_decision = batch_index_select(prev_decision, now_policy)
                         x = blk(x, freqs_cis=freqs_cis[i], num_prefix_tokens=self.num_prefix_tokens, num_latent_tokens=self.num_latent_tokens)
@@ -241,9 +242,11 @@ class TimmViTEncoder(nn.Module):
 
         # get z tokens as out
         out = x[:, -self.num_latent_tokens:]
-        
+
+        info = num_ones_per_sample.float().mean().item()
+
         if return_mask:
-            return out, mask, losses
+            return out, mask, losses, info
         else:
             return out
 

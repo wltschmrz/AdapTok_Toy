@@ -11,7 +11,7 @@ no_local_save: True
 
 
 dataset: gridset
-data_path: ./data/gridset/train
+data_path: ./data/imagenet10p/train  # gridset/train
 image_size: 128  # <- 256
 
 vq_model: DynamicAE-16
@@ -28,7 +28,7 @@ perceptual_weight: 0.0      # flat color에 부적합, 끈다 (1.0 -> 0.0)
 perceptual_warmup: 0  # 10000
 
 disc_weight: 0.0            # GAN 비활성  # 0.2  # 0.4
-disc_adaptive_weight: True
+disc_adaptive_weight: False
 use_diff_aug: False 
 disc_cr_loss_weight: 0.0
 disc_start: 100000000       # 실질적 비활성 # 30000
@@ -39,7 +39,7 @@ lecam_loss_weight: 0.0  # 0.001
 
 encoder_model: vit_tiny_patch16_224  # latent: 192 // vit_base_patch14_dinov2.lvd142m
 encoder_pretrained: False
-encoder_patch_size: 8
+encoder_patch_size: 16
 encoder_tuning_method: full
 encoder_drop_path_rate: 0.0  # 얘는 뭐냐?  #####
 encoder_depth: 4            # <-- 추가 키를 지원하도록 코드에 반영 예정
@@ -48,7 +48,7 @@ encoder_num_heads: 2        # <-- "
 
 decoder_model: vit_tiny_patch16_224  # vit_base_patch14_dinov2_movqv2
 decoder_pretrained: False 
-decoder_patch_size: 8
+decoder_patch_size: 16
 decoder_tuning_method: full
 decoder_drop_path_rate: 0.0  # 0.05  왜???
 decoder_cls_token: False
@@ -65,13 +65,6 @@ rope_theta: 10.0
 # token drop로 변수 길이 유도하는 놈들이야 얘네? 아니지. 뭐하는 애들인지 알아봐 나중에
 enc_token_drop: 0.4
 enc_token_drop_max: 0.6
-
-# 보조/교사 네트워크 끔
-aux_decoder_model: none
-aux_loss_mask: False
-aux_hog_decoder: False
-aux_dino_decoder: False
-aux_clip_decoder: False
 
 repa: False
 repa_model: vit_large_patch14_dinov2.lvd142m
@@ -90,7 +83,7 @@ weight_decay: 5e-4  # 0.0001 = 	1e-4
 beta1: 0.9
 beta2: 0.95
 max_grad_norm: 1.0
-global_batch_size: 128     # 4×3090에서 충분. 메모리 보고 1536~2048도 시도.
+global_batch_size: 2560     # 4×3090에서 충분. 메모리 보고 1536~2048도 시도.
 
 
 # length penalty(코드에 추가 구현)

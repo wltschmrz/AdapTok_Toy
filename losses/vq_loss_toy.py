@@ -106,7 +106,7 @@ class VQLoss(nn.Module):
 
         loss_function = nn.NLLLoss()
 
-        mask_loss1 = - torch.log(1 - codebook_loss[0] + 1e-8)
+        # mask_loss1 = - torch.log(1 - codebook_loss[0] + 1e-8)
         # mask_loss2 = -torch.log(1 - codebook_loss[1] + 1e-8)
         # mask_loss3 = -torch.log(1 - codebook_loss[2] + 1e-8)
 
@@ -127,7 +127,7 @@ class VQLoss(nn.Module):
             mask_ad_w3 = 0
 
         else:
-            mask_ad_w1 = mask_ad_w2 = mask_ad_w3 = 1
+            mask_ad_w1 = mask_ad_w2 = mask_ad_w3 = 1e-25
         # disc_weight = adopt_weight(self.disc_weight, global_step, threshold=self.discriminator_iter_start)
 
 
@@ -165,12 +165,7 @@ class VQLoss(nn.Module):
                     'rec_loss': rec_log,
                     'mask_loss': total_mask_loss,
                     'mask_loss1': mask_loss1,
-                    'mask_loss2': mask_loss2,
-                    'mask_loss3': mask_loss3,
-                    'total_mask_loss': total_mask_loss,
                     'mask_ad_w1': mask_ad_w1,
-                    'mask_ad_w2': mask_ad_w2,
-                    'mask_ad_w3': mask_ad_w3,
                 }
                 if len(codebook_loss) > 5:
                     for i in range(5, len(codebook_loss)):
